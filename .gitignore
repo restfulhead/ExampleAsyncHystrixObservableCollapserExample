@@ -1,0 +1,32 @@
+# OS GENERATED FILES #
+.DS_Store
+ehthumbs.db
+Icon
+Thumbs.db
+
+# Maven generated files
+/target/
+
+# INTELLIJ GENERATED FILES #
+.idea/
+*.iml
+*.eml
+
+# ECLIPSE GENERATED FILES #
+RemoteSystemsTempFiles/
+.metadata
+.classpath
+.project
+.settings
+/bin/
+
+# MERGED FILES #
+*.BASE
+*.LOCAL
+*.REMOTE
+*.orig
+
+# JAVA GENERATED FILES #
+*.class
+*.number
+
