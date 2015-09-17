@@ -1,4 +1,4 @@
-The idea for this basic example project came out of a discussion in https://github.com/Netflix/Hystrix/issues/895. The `ExampleHystrixObservableCollapserTest` demonstrates how to use [Hystrix request collapsing](ReactiveLab/reactive-lab-edge/src/main/java/io/reactivex/lab/edge/clients/BookmarkCommand.java) with [Rx Observables](http://reactivex.io/intro.html) (`HystrixObservableCollapser`).
+The idea for this basic example project came out of a [discussion in the Hystrix repo](https://github.com/Netflix/Hystrix/issues/895). The `ExampleHystrixObservableCollapserTest` demonstrates how to use [Hystrix request collapsing](ReactiveLab/reactive-lab-edge/src/main/java/io/reactivex/lab/edge/clients/BookmarkCommand.java) with [Rx Observables](http://reactivex.io/intro.html) (`HystrixObservableCollapser`).
 
 The key take-aways are:
 * You need to call 'HystrixRequestContext.initializeContext()' before and `HystrixRequestContext.shutdown()` after the request.
