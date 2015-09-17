@@ -25,6 +25,7 @@ import rx.schedulers.Schedulers;
 
 import com.ibm.icu.text.RuleBasedNumberFormat;
 import com.netflix.hystrix.HystrixObservableCollapser;
+import com.netflix.hystrix.HystrixRequestLog;
 import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 
 /**
@@ -49,6 +50,7 @@ public class ExampleHystrixObservableCollapserTest
 	@After
 	public void after()
 	{
+		LOG.info(HystrixRequestLog.getCurrentRequest().getExecutedCommandsAsString());
 		ctx.shutdown();
 	}
 
