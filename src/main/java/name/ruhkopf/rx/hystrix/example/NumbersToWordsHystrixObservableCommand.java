@@ -14,13 +14,13 @@ import com.netflix.hystrix.HystrixObservableCommand;
  *
  * @author Patrick Ruhkopf
  */
-public class ExampleHystrixObservableCommand extends HystrixObservableCommand<NumberWord>
+public class NumbersToWordsHystrixObservableCommand extends HystrixObservableCommand<NumberWord>
 {
 	private final List<Long> numbers;
 
-	public ExampleHystrixObservableCommand(final List<Long> numbers)
+	public NumbersToWordsHystrixObservableCommand(final List<Long> numbers)
 	{
-		super(HystrixCommandGroupKey.Factory.asKey(ExampleHystrixObservableCommand.class.getName()));
+		super(HystrixCommandGroupKey.Factory.asKey(NumbersToWordsHystrixObservableCommand.class.getName()));
 		this.numbers = numbers;
 	}
 

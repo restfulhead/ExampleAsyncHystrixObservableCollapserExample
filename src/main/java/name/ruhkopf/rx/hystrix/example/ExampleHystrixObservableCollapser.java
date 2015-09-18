@@ -15,7 +15,7 @@ import com.netflix.hystrix.HystrixObservableCollapser;
 import com.netflix.hystrix.HystrixObservableCommand;
 
 /**
- * HystrixObservableCollapser that batches multiple requests for {@link ExampleHystrixObservableCommand}.
+ * HystrixObservableCollapser that batches multiple requests for {@link NumbersToWordsHystrixObservableCommand}.
  *
  * @author Patrick Ruhkopf
  */
@@ -61,7 +61,7 @@ public class ExampleHystrixObservableCollapser extends HystrixObservableCollapse
 			numbers.add(request.getArgument());
 		}
 
-		return new ExampleHystrixObservableCommand(numbers);
+		return new NumbersToWordsHystrixObservableCommand(numbers);
 	}
 
 	@Override
