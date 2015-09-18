@@ -70,13 +70,16 @@ public class IssueWithBackgroundTasks
 			return new ExampleHystrixObservableCollapser(1L).toObservable();
 		});
 
+		// this initializes the context, then waits (blocks) for response to complete, then closes the context
 		simulateHttpRequest(response);
 
+		// the "foreground" task was executed fine
 		assertThat(ExampleHystrixObservableCollapser.getCmdCount(), is(1));
 
+		// however, the "background" task is still running. let's wait for it
 		bgSubscriber.awaitTerminalEvent(10, TimeUnit.SECONDS);
 
-		// print out the error
+		// and print out the error of the background task :(
 		bgSubscriber.getOnErrorEvents().stream().forEach(e -> e.printStackTrace());
 
 		// this fails, because we received java.lang.IllegalStateException: HystrixRequestContext.initializeContext() ...
@@ -102,8 +105,6 @@ public class IssueWithBackgroundTasks
 	 */
 	protected void simulateHttpRequest(final Observable<?> response)
 	{
-		// simulate servlet filter as shown here:
-
 		final HystrixRequestContext ctx = HystrixRequestContext.initializeContext();
 		try
 		{
