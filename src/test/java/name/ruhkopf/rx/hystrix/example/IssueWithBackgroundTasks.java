@@ -6,17 +6,17 @@ import static org.junit.Assert.assertThat;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import rx.observers.TestSubscriber;
-import rx.plugins.RxJavaPlugins;
 import rx.schedulers.Schedulers;
 
 import com.netflix.hystrix.HystrixRequestLog;
+import com.netflix.hystrix.strategy.HystrixPlugins;
+import com.netflix.hystrix.strategy.concurrency.HystrixContextScheduler;
 import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 
 /**
@@ -27,12 +27,6 @@ import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 public class IssueWithBackgroundTasks
 {
 	private static final Logger LOG = LoggerFactory.getLogger(IssueWithBackgroundTasks.class);
-
-	@BeforeClass
-	public static void setup()
-	{
-		RxJavaPlugins.getInstance().registerSchedulersHook(new HystrixRxJavaSchedulersHook());
-	}
 
 	@Before
 	public void before()
@@ -62,6 +56,9 @@ public class IssueWithBackgroundTasks
 	@Test
 	public void demonstrateSyncRequestThatSchedulesAnAsyncTask()
 	{
+		final HystrixContextScheduler contextAwareScheduler = new HystrixContextScheduler(HystrixPlugins.getInstance()
+				.getConcurrencyStrategy(), Schedulers.computation());
+		
 		// assuming this is a task that we want to run in the background and can't afford to wait for its result
 		final TestSubscriber<String> bgSubscriber = new TestSubscriber<>();
 		final Observable<String> bgObs = Observable.defer(() -> {
@@ -72,7 +69,7 @@ public class IssueWithBackgroundTasks
 		final Observable<?> response = Observable.defer(() -> {
 
 			// subscribe to background task, then walk away...
-			bgObs.subscribeOn(Schedulers.computation()).subscribe(bgSubscriber);
+			bgObs.subscribeOn(contextAwareScheduler).subscribe(bgSubscriber);
 
 			// and do something else
 			return new ExampleHystrixObservableCollapser(1L).toObservable();
