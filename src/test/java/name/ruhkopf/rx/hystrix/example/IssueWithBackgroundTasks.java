@@ -46,13 +46,18 @@ public class IssueWithBackgroundTasks
 		assertThat(ExampleHystrixObservableCollapser.getCmdCount(), is(1));
 	}
 
+	/**
+	 * However, this pattern fails if we start an asynchronous task within the request. The background thread inherits the Hystrix
+	 * Context, however, there's a race condition where the task fails if the request completed before. That's because the request
+	 * removes the Hystrix Context.
+	 */
 	@Test
 	public void demonstrateSyncRequestThatSchedulesAnAsyncTask()
 	{
 		// assuming this is a task that we want to run in the background and can't afford to wait for its result
 		final TestSubscriber<String> bgSubscriber = new TestSubscriber<>();
 		final Observable<String> bgObs = Observable.defer(() -> {
-			sleep(5000);
+			sleep(5000); // add some sleep to simulate long running transaction to show race condition
 			return new ExampleHystrixObservableCollapser(200L).toObservable();
 		});
 
@@ -71,11 +76,13 @@ public class IssueWithBackgroundTasks
 
 		bgSubscriber.awaitTerminalEvent(10, TimeUnit.SECONDS);
 
+		// print out the error
 		bgSubscriber.getOnErrorEvents().stream().forEach(e -> e.printStackTrace());
+
+		// this fails, because we received java.lang.IllegalStateException: HystrixRequestContext.initializeContext() ...
 		assertThat(bgSubscriber.getOnErrorEvents().toString(), bgSubscriber.getOnErrorEvents().size(), is(0));
 		assertThat(bgSubscriber.getOnNextEvents().size(), is(1));
 		assertThat(bgSubscriber.getOnNextEvents().get(0), is("two hundred"));
-
 	}
 
 
