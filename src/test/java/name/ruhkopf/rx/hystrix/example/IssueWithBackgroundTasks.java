@@ -6,12 +6,14 @@ import static org.junit.Assert.assertThat;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import rx.observers.TestSubscriber;
+import rx.plugins.RxJavaPlugins;
 import rx.schedulers.Schedulers;
 
 import com.netflix.hystrix.HystrixRequestLog;
@@ -25,6 +27,12 @@ import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 public class IssueWithBackgroundTasks
 {
 	private static final Logger LOG = LoggerFactory.getLogger(IssueWithBackgroundTasks.class);
+
+	@BeforeClass
+	public static void setup()
+	{
+		RxJavaPlugins.getInstance().registerSchedulersHook(new HystrixRxJavaSchedulersHook());
+	}
 
 	@Before
 	public void before()
