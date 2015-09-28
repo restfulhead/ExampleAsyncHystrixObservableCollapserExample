@@ -39,7 +39,7 @@ public class IssueWithBackgroundTasks
 	 * block before we close the Hystrix context. This works fine.
 	 */
 	@Test
-	public void demonstrateSyncRequest()
+	public void shouldHandleSyncRequest()
 	{
 		final Observable<?> response = Observable.defer(() -> new ExampleHystrixObservableCollapser(1L).toObservable());
 
@@ -54,11 +54,11 @@ public class IssueWithBackgroundTasks
 	 * removes the Hystrix Context.
 	 */
 	@Test
-	public void demonstrateSyncRequestThatSchedulesAnAsyncTask()
+	public void demonstrateSchedulingCollapserAsyncFails()
 	{
 		final HystrixContextScheduler contextAwareScheduler = new HystrixContextScheduler(HystrixPlugins.getInstance()
 				.getConcurrencyStrategy(), Schedulers.computation());
-		
+
 		// assuming this is a task that we want to run in the background and can't afford to wait for its result
 		final TestSubscriber<String> bgSubscriber = new TestSubscriber<>();
 		final Observable<String> bgObs = Observable.defer(() -> {
@@ -86,6 +86,44 @@ public class IssueWithBackgroundTasks
 
 		// and print out the error of the background task :(
 		bgSubscriber.getOnErrorEvents().stream().forEach(e -> e.printStackTrace());
+
+		// this fails, because we received java.lang.IllegalStateException: HystrixRequestContext.initializeContext() ...
+		assertThat(bgSubscriber.getOnErrorEvents().toString(), bgSubscriber.getOnErrorEvents().size(), is(1));
+	}
+
+	/**
+	 * In this case we have to use the command directly. We can't use the Collapser. :(
+	 */
+	@Test
+	public void shouldScheduleAsync()
+	{
+		final HystrixContextScheduler contextAwareScheduler = new HystrixContextScheduler(HystrixPlugins.getInstance()
+				.getConcurrencyStrategy(), Schedulers.computation());
+
+		// assuming this is a task that we want to run in the background and can't afford to wait for its result
+		final TestSubscriber<String> bgSubscriber = new TestSubscriber<>();
+		final Observable<String> bgObs = Observable.defer(() -> {
+			sleep(5000); // add some sleep to simulate long running transaction to show race condition
+				return new NumbersToWordsHystrixObservableCommand(200L).toObservable().map(NumberWord::getWord);
+			});
+
+		final Observable<?> response = Observable.defer(() -> {
+
+			// subscribe to background task, then walk away...
+				bgObs.subscribeOn(contextAwareScheduler).subscribe(bgSubscriber);
+
+				// and do something else
+				return new ExampleHystrixObservableCollapser(1L).toObservable();
+			});
+
+		// this initializes the context, then waits (blocks) for response to complete, then closes the context
+		simulateHttpRequest(response);
+
+		// the "foreground" task was executed fine
+		assertThat(ExampleHystrixObservableCollapser.getCmdCount(), is(1));
+
+		// however, the "background" task is still running. let's wait for it
+		bgSubscriber.awaitTerminalEvent(10, TimeUnit.SECONDS);
 
 		// this fails, because we received java.lang.IllegalStateException: HystrixRequestContext.initializeContext() ...
 		assertThat(bgSubscriber.getOnErrorEvents().toString(), bgSubscriber.getOnErrorEvents().size(), is(0));

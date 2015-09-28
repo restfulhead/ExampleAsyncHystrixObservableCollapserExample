@@ -3,11 +3,13 @@ package name.ruhkopf.rx.hystrix.example;
 import rx.functions.Action0;
 import rx.plugins.RxJavaSchedulersHook;
 
+import com.netflix.hystrix.strategy.concurrency.HystrixContextScheduler;
 import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 
 /**
  * RxJava plugin that propagates the {@link HystrixRequestContext} of the calling thread to the thread that executes the action.
- * This is necessary for example to make request collapsing work when scheduling Observables on another thread.
+ * This is necessary for example to make request collapsing work when scheduling Observables on another thread. As an alternative
+ * to this plugin, you can make use of the {@link HystrixContextScheduler}.
  *
  * @author Patrick Ruhkopf
  */

@@ -23,7 +23,7 @@ public class ExampleHystrixObservableCollapser extends HystrixObservableCollapse
 {
 	private static final Logger LOG = LoggerFactory.getLogger(ExampleHystrixObservableCollapser.class);
 
-	private final Long id;
+	private final Long number;
 
 	private final static AtomicInteger counter = new AtomicInteger();
 
@@ -37,15 +37,15 @@ public class ExampleHystrixObservableCollapser extends HystrixObservableCollapse
 		return counter.get();
 	}
 
-	public ExampleHystrixObservableCollapser(final Long id)
+	public ExampleHystrixObservableCollapser(final Long number)
 	{
-		this.id = id;
+		this.number = number;
 	}
 
 	@Override
 	public Long getRequestArgument()
 	{
-		return id;
+		return number;
 	}
 
 	@SuppressWarnings("boxing")

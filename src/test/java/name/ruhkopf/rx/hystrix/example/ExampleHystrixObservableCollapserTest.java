@@ -20,12 +20,13 @@ import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import rx.observers.TestSubscriber;
-import rx.plugins.RxJavaPlugins;
 import rx.schedulers.Schedulers;
 
 import com.ibm.icu.text.RuleBasedNumberFormat;
 import com.netflix.hystrix.HystrixObservableCollapser;
 import com.netflix.hystrix.HystrixRequestLog;
+import com.netflix.hystrix.strategy.HystrixPlugins;
+import com.netflix.hystrix.strategy.concurrency.HystrixContextScheduler;
 import com.netflix.hystrix.strategy.concurrency.HystrixRequestContext;
 
 /**
@@ -96,7 +97,11 @@ public class ExampleHystrixObservableCollapserTest
 	{
 		// NOTE: This test requires the RX Plugin, that transfers the Hystrix context.
 		// Without it we get IllegalStateException: HystrixRequestContext.initializeContext() must be called ...
-		RxJavaPlugins.getInstance().registerSchedulersHook(new HystrixRxJavaSchedulersHook());
+		// RxJavaPlugins.getInstance().registerSchedulersHook(new HystrixRxJavaSchedulersHook());
+
+		// replaced with alternative proposed by mattrjacobs
+		final HystrixContextScheduler contextAwareScheduler = new HystrixContextScheduler(HystrixPlugins.getInstance()
+				.getConcurrencyStrategy(), Schedulers.computation());
 
 		final int noOfRequests = 1000;
 		final Map<Long, TestSubscriber<String>> subscribersByNumber = new HashMap<>(noOfRequests);
@@ -106,7 +111,7 @@ public class ExampleHystrixObservableCollapserTest
 			final TestSubscriber<String> subscriber = new TestSubscriber<>();
 			final long finalNumber = number;
 			Observable.defer(() -> new ExampleHystrixObservableCollapser(finalNumber).toObservable())
-					.subscribeOn(Schedulers.computation()).subscribe(subscriber);
+					.subscribeOn(contextAwareScheduler).subscribe(subscriber);
 			subscribersByNumber.put(number, subscriber);
 
 			// wait a little bit after running half of the requests so that we don't collapse all of them into one batch
@@ -119,8 +124,7 @@ public class ExampleHystrixObservableCollapserTest
 		for (final Entry<Long, TestSubscriber<String>> subscriberByNumber : subscribersByNumber.entrySet())
 		{
 			final TestSubscriber<String> subscriber = subscriberByNumber.getValue();
-			subscriber.awaitTerminalEvent();
-			// subscriber.awaitTerminalEvent(100, TimeUnit.SECONDS);
+			subscriber.awaitTerminalEvent(10, TimeUnit.SECONDS);
 
 			assertThat(subscriber.getOnErrorEvents().toString(), subscriber.getOnErrorEvents().size(), is(0));
 			assertThat(subscriber.getOnNextEvents().size(), is(1));

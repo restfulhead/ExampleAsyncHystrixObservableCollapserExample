@@ -1,5 +1,6 @@
 package name.ruhkopf.rx.hystrix.example;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -17,6 +18,11 @@ import com.netflix.hystrix.HystrixObservableCommand;
 public class NumbersToWordsHystrixObservableCommand extends HystrixObservableCommand<NumberWord>
 {
 	private final List<Long> numbers;
+
+	public NumbersToWordsHystrixObservableCommand(final long singleNumber)
+	{
+		this(Collections.singletonList(singleNumber));
+	}
 
 	public NumbersToWordsHystrixObservableCommand(final List<Long> numbers)
 	{
